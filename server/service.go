@@ -15,21 +15,25 @@ func Start(port int) {
 	logger.Info("Starting magoto server on port %d", port)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Get("/home", func(w http.ResponseWriter, r *http.Request) {
+
+	r.Get("/magoto", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "assets/index.html")
 	})
+
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "assets/favicon.ico")
+		http.ServeFile(w, r, "assets/icons/favicon.png")
 	})
 
 	workDir, _ := os.Getwd()
 	filesDir := http.Dir(filepath.Join(workDir, "assets"))
 	FileServer(r, "/assets", filesDir)
 
+	//TODO fix port config
 	// addr := ":" + string(port)
 	http.ListenAndServe(":80", r)
 }
 
+// TODO move to its own file
 func FileServer(r chi.Router, path string, root http.FileSystem) {
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit any URL parameters.")
