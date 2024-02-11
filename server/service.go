@@ -11,22 +11,32 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+var assetDir string
+
 func Start(port int) {
 	logger.Info("Starting magoto server on port %d", port)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
+	//TODO embed assets or store in config dir
+	//use config dir if dynamic compilation is needed
+	exDir, err := os.Executable()
+	if err != nil {
+		logger.FatalErr("Error getting working directory: %s", err)
+	}
+	assetDir = filepath.Join(filepath.Dir(exDir), "assets")
+
 	r.Get("/magoto", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "assets/index.html")
+		fpath := asset("index.html")
+		logger.Debug("Serving file: %s", fpath)
+		http.ServeFile(w, r, fpath)
 	})
 
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "assets/icons/favicon.png")
+		http.ServeFile(w, r, asset("icons/favicon.png"))
 	})
 
-	workDir, _ := os.Getwd()
-	filesDir := http.Dir(filepath.Join(workDir, "assets"))
-	FileServer(r, "/assets", filesDir)
+	FileServer(r, "/assets", http.Dir(assetDir))
 
 	//TODO fix port config
 	// addr := ":" + string(port)
@@ -48,7 +58,12 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
 		rctx := chi.RouteContext(r.Context())
 		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
+		logger.Debug("Path prefix: %s", pathPrefix)
 		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
 		fs.ServeHTTP(w, r)
 	})
+}
+
+func asset(relPath string) string {
+	return filepath.Join(assetDir, relPath)
 }
