@@ -45,7 +45,7 @@ const step = (key) => {
     keySeq.push(key)
     curr = curr.children[key]
     nodeSeq.push(curr)
-    update()
+    render()
 }
 
 const back = () => {
@@ -55,23 +55,34 @@ const back = () => {
     keySeq.pop()
     nodeSeq.pop()
     curr = nodeSeq[nodeSeq.length - 1]
-    update()
+    render()
 }
 
 const reset = () => {
     keySeq.splice(0)
     nodeSeq.splice(1)
     curr = nodeSeq[0]
-    update()
+    render()
 }
 
-const update = () => {
-    console.log('updating')
+//TODO don't do full re-render every time
+const render = async () => {
+    element = document.getElementById('seqText')
     if (keySeq.length === 0) {
-        document.getElementById('seqText').innerText = '...'
+        element.innerHTML = '...'
         return
     }
-    document.getElementById('seqText').innerText = keySeq.join(' ')
+    element.innerHTML = ''
+    for (const key of keySeq) {
+        buildChip(key)
+        element.appendChild(chip)
+    }
+}
+
+const buildChip = (key) => {
+    chip = document.createElement('div')
+    chip.setAttribute('class', 'chip')
+    chip.innerText = key
 }
 
 // for (const item of CONFIG.firstlistsContainer) {
